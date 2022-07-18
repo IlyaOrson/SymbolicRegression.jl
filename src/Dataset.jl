@@ -1,5 +1,6 @@
 module DatasetModule
 
+import Base
 import ..ProgramConstantsModule: BATCH_DIM, FEATURE_DIM
 
 """

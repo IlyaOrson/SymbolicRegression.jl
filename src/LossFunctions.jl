@@ -11,6 +11,7 @@ function loss( # fmt: off
     y::AbstractArray{T},
     options::Options{A,B,dA,dB,C,D}, # fmt: on
 )::T where {T<:Real,A,B,dA,dB,C,D}
+    @error "default loss"
     if C <: SupervisedLoss
         return value(options.loss, y, x, AggMode.Mean())
     elseif C <: Function
@@ -26,6 +27,7 @@ function loss(
     w::AbstractArray{T},
     options::Options{A,B,dA,dB,C,D},
 )::T where {T<:Real,A,B,dA,dB,C,D}
+    @error "default loss weighted"
     if C <: SupervisedLoss
         return value(options.loss, y, x, AggMode.WeightedMean(w))
     elseif C <: Function
@@ -42,11 +44,63 @@ function eval_loss(tree::Node{T}, dataset::Dataset{T}, options::Options)::T wher
         return T(Inf)
     end
 
-    if dataset.weighted
-        return loss(prediction, dataset.y, dataset.weights, options)
-    else
-        return loss(prediction, dataset.y, options)
+    function integrate(initial_condition, tspan)
+        function f(u, p, t)
+            matrix_state = reshape(collect(u), length(u), :)
+            (prediction, completion) = eval_tree_array(tree, matrix_state, options)
+            return prediction[begin]
+        end
+        # @infiltrate
+        prob = ODEProblem(f, initial_condition, tspan)
+        # local sol
+        # try
+            sol = solve(prob, Rodas4P(); maxiters=10^3)  # 1.0e-7 default dtmin, 1e5 default maxiters
+        # catch
+        #     @infiltrate
+        # end
+        # @infiltrate sol.retcode != :Success
+        return sol.u[end], sol.retcode
     end
+
+    # times = dataset.times
+    # concentrations = dataset.states
+
+    # X = Matrix(reshape(range(0f0, 5f0, 6), 1, 6))
+    # y = X[1, :] .^ 2 .+ 2
+
+    loss_ = 0f0
+
+    # integrate between states
+    # for (i, (t, s)) in enumerate(zip(times, states))
+    #     i == 1 && continue
+    #     timespan = t - times[i-1]
+    #     initial_condition = states[i-1]
+    #     prediction = integrate(initial_condition, timespan)
+    #     loss_ += (prediction - s) .^ 2
+    # end
+
+    # integrate from first state always
+    times = 0f0:5f0
+    states = dataset.X
+    for (i, (t, s)) in enumerate(zip(times, states))
+        i == 1 && continue
+        timespan = (0f0, t)
+        initial_condition = states[begin]
+        prediction, retcode = integrate(initial_condition, timespan)  # FIXME
+        if retcode != :Success
+            loss_ = Inf
+            break
+        end
+        loss_ += (prediction - s) .^ 2
+    end
+    @info tree, loss_, compute_complexity(tree, options)
+    #@infiltrate
+    return loss_
+    # if dataset.weighted
+    #     return loss(prediction, dataset.y, dataset.weights, options)
+    # else
+    #     return loss(prediction, dataset.y, options)
+    # end
 end
 
 # Compute a score which includes a complexity penalty in the loss
@@ -97,11 +151,12 @@ function score_func_batch(
 end
 
 function update_baseline_loss!(dataset::Dataset{T}, options::Options) where {T<:Real}
-    dataset.baseline_loss = if dataset.weighted
-        loss(dataset.y, ones(T, dataset.n) .* dataset.avg_y, dataset.weights, options)
-    else
-        loss(dataset.y, ones(T, dataset.n) .* dataset.avg_y, options)
-    end
+    dataset.baseline_loss = one(T)  # [1f0]
+    # dataset.baseline_loss = if dataset.weighted
+    #     loss(dataset.y, ones(T, dataset.n) .* dataset.avg_y, dataset.weights, options)
+    # else
+    #     loss(dataset.y, ones(T, dataset.n) .* dataset.avg_y, options)
+    # end
     return nothing
 end
 

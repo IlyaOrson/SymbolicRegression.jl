@@ -1,5 +1,7 @@
 module SymbolicRegression
 
+using Infiltrator: @infiltrate
+
 # Types
 export Population,
     PopMember,
@@ -735,7 +737,7 @@ function _EquationSearch(
                 )
                     to_copy = rand(1:size(bestPops.members, 1))
 
-                    # Explicit copy here resets the birth. 
+                    # Explicit copy here resets the birth.
                     cur_pop.members[k] = PopMember(
                         copy_node(bestPops.members[to_copy].tree),
                         copy(bestPops.members[to_copy].score),
