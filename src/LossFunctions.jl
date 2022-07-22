@@ -54,7 +54,7 @@ function eval_loss(tree::Node{T}, dataset::Dataset{T}, options::Options)::T wher
         prob = ODEProblem(f, initial_condition, tspan)
         # local sol
         # try
-            sol = solve(prob, Rodas4P(); maxiters=10^3)  # 1.0e-7 default dtmin, 1e5 default maxiters
+            sol = solve(prob, Rodas4P(); verbose=false, maxiters=10^3)  # 1.0e-7 default dtmin, 1e5 default maxiters
         # catch
         #     @infiltrate
         # end
@@ -65,8 +65,11 @@ function eval_loss(tree::Node{T}, dataset::Dataset{T}, options::Options)::T wher
     # times = dataset.times
     # concentrations = dataset.states
 
-    # X = Matrix(reshape(range(0f0, 5f0, 6), 1, 6))
-    # y = X[1, :] .^ 2 .+ 2
+    timepoints = 21
+    times = range(0f0, 5f0, timepoints)  # FIXME
+    # X = Matrix(reshape(times, 1, timepoints))
+    # y = exp.(X ./ 2) .+ 5
+    # X .= y
 
     loss_ = 0f0
 
@@ -80,7 +83,6 @@ function eval_loss(tree::Node{T}, dataset::Dataset{T}, options::Options)::T wher
     # end
 
     # integrate from first state always
-    times = 0f0:5f0
     states = dataset.X
     for (i, (t, s)) in enumerate(zip(times, states))
         i == 1 && continue
@@ -93,7 +95,7 @@ function eval_loss(tree::Node{T}, dataset::Dataset{T}, options::Options)::T wher
         end
         loss_ += (prediction - s) .^ 2
     end
-    @info tree, loss_, compute_complexity(tree, options)
+    # @info tree, loss_, compute_complexity(tree, options)
     #@infiltrate
     return loss_
     # if dataset.weighted
@@ -115,7 +117,7 @@ function loss_to_score(
     normalized_loss_term = loss / normalization
     size = compute_complexity(tree, options)
     parsimony_term = size * options.parsimony
-
+    normalized_loss_term + parsimony_term < 0.0
     return normalized_loss_term + parsimony_term
 end
 
