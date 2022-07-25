@@ -6,6 +6,10 @@ import ..CoreModule: Options, Dataset, Node
 import ..EquationUtilsModule: compute_complexity
 import ..EvaluateEquationModule: eval_tree_array, differentiable_eval_tree_array
 
+using IterTools: groupby
+using Infiltrator: @infiltrate
+using OrdinaryDiffEq
+
 function loss( # fmt: off
     x::AbstractArray{T},
     y::AbstractArray{T},
@@ -50,7 +54,6 @@ function eval_loss(tree::Node{T}, dataset::Dataset{T}, options::Options)::T wher
             (prediction, completion) = eval_tree_array(tree, matrix_state, options)
             return prediction[begin]
         end
-        # @infiltrate
         prob = ODEProblem(f, initial_condition, tspan)
         # local sol
         # try
@@ -65,8 +68,8 @@ function eval_loss(tree::Node{T}, dataset::Dataset{T}, options::Options)::T wher
     # times = dataset.times
     # concentrations = dataset.states
 
-    timepoints = 21
-    times = range(0f0, 5f0, timepoints)  # FIXME
+    # timepoints = 21
+    # times = range(0f0, 5f0, timepoints)  # FIXME
     # X = Matrix(reshape(times, 1, timepoints))
     # y = exp.(X ./ 2) .+ 5
     # X .= y
@@ -82,18 +85,29 @@ function eval_loss(tree::Node{T}, dataset::Dataset{T}, options::Options)::T wher
     #     loss_ += (prediction - s) .^ 2
     # end
 
-    # integrate from first state always
     states = dataset.X
-    for (i, (t, s)) in enumerate(zip(times, states))
-        i == 1 && continue
-        timespan = (0f0, t)
-        initial_condition = states[begin]
-        prediction, retcode = integrate(initial_condition, timespan)  # FIXME
-        if retcode != :Success
-            loss_ = Inf
-            break
+    times = dataset.times
+    experiments = dataset.experiments
+
+    @assert length(times) == length(experiments) == size(states, 2)
+    per_experiment = groupby(x -> x[begin], zip(experiments, times, eachcol(states)))
+    for experiment in per_experiment
+        _, t0, initial_condition = experiment[begin]  # supposing it is sorted
+        for (i, data) in enumerate(experiment)
+            _, t, s = data  # experiment tag is no longer used
+            if i == 1
+                # integrate from first state always
+                continue
+            end
+            @infiltrate i != 1
+            timespan = (t0, t)
+            prediction, retcode = integrate(initial_condition, timespan)
+            if retcode != :Success
+                loss_ = Inf
+                break
+            end
+            loss_ += (prediction - s) .^ 2
         end
-        loss_ += (prediction - s) .^ 2
     end
     # @info tree, loss_, compute_complexity(tree, options)
     #@infiltrate

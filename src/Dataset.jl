@@ -22,16 +22,18 @@ import ..ProgramConstantsModule: BATCH_DIM, FEATURE_DIM
 - `varMap::Array{String,1}`: The names of the features,
     with shape `(nfeatures,)`.
 """
-mutable struct Dataset{T<:Real}
-    X::AbstractMatrix{T}
-    y::AbstractVector{T}
-    n::Int
-    nfeatures::Int
-    weighted::Bool
-    weights::Union{AbstractVector{T},Nothing}
-    avg_y::T
-    baseline_loss::T
-    varMap::Array{String,1}
+Base.@kwdef mutable struct Dataset{T<:Real}
+    times::Union{AbstractVector{T}, Nothing} = nothing
+    experiments::Union{AbstractVector{T}, Nothing} = nothing
+    X::AbstractMatrix{T} = [1 2]
+    y::AbstractVector{T} = [3]
+    n::Int = 1
+    nfeatures::Int = 1
+    weighted::Bool = false
+    weights::Union{AbstractVector{T},Nothing} = nothing
+    avg_y::T = one(T)
+    baseline_loss::T = one(T)
+    varMap::Array{String,1} = ["hola"]
 end
 
 """
@@ -44,6 +46,8 @@ Construct a dataset to pass between internal functions.
 function Dataset(
     X::AbstractMatrix{T},
     y::AbstractVector{T};
+    times::Union{AbstractVector{T}, Nothing}=nothing,
+    experiments::Union{AbstractVector{T}, Nothing}=nothing,
     weights::Union{AbstractVector{T},Nothing}=nothing,
     varMap::Union{Array{String,1},Nothing}=nothing,
 ) where {T<:Real}
@@ -61,7 +65,7 @@ function Dataset(
     end
     baseline = one(T)
 
-    return Dataset{T}(X, y, n, nfeatures, weighted, weights, avg_y, baseline, varMap)
+    return Dataset{T}(; times, experiments, X, y, n, nfeatures, weighted, weights, avg_y, baseline, varMap)
 end
 
 end

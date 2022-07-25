@@ -270,6 +270,8 @@ which is useful for debugging and profiling.
 function EquationSearch(
     X::AbstractMatrix{T},
     y::AbstractMatrix{T};
+    times::Union{AbstractVector{T}, Nothing}=nothing,
+    experiments::Union{AbstractVector{T}, Nothing}=nothing,
     niterations::Int=10,
     weights::Union{AbstractMatrix{T},AbstractVector{T},Nothing}=nothing,
     varMap::Union{Array{String,1},Nothing}=nothing,
@@ -289,12 +291,14 @@ function EquationSearch(
         Dataset(
             X,
             y[j, :];
+            times,
+            experiments,
             weights=(weights === nothing ? weights : weights[j, :]),
             varMap=varMap,
         ) for j in 1:nout
     ]
 
-    return EquationSearch(
+    return EquationSearch(  # FIXME
         datasets;
         niterations=niterations,
         options=options,
