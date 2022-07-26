@@ -52,7 +52,7 @@ function eval_loss(tree::Node{T}, dataset::Dataset{T}, options::Options)::T wher
         function f(u, p, t)
             matrix_state = reshape(collect(u), length(u), :)
             (prediction, completion) = eval_tree_array(tree, matrix_state, options)
-            return prediction[begin]
+            return [prediction[begin]]
         end
         prob = ODEProblem(f, initial_condition, tspan)
         # local sol
@@ -99,18 +99,18 @@ function eval_loss(tree::Node{T}, dataset::Dataset{T}, options::Options)::T wher
                 # integrate from first state always
                 continue
             end
-            @infiltrate i != 1
+            @infiltrate
             timespan = (t0, t)
-            prediction, retcode = integrate(initial_condition, timespan)
+            prediction, retcode = integrate(collect(initial_condition), timespan)
             if retcode != :Success
                 loss_ = Inf
                 break
             end
-            loss_ += (prediction - s) .^ 2
+            loss_ += (prediction - s)[begin] .^ 2
         end
     end
     # @info tree, loss_, compute_complexity(tree, options)
-    #@infiltrate
+
     return loss_
     # if dataset.weighted
     #     return loss(prediction, dataset.y, dataset.weights, options)
