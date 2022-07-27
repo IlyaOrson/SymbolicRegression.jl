@@ -271,6 +271,7 @@ function EquationSearch(
     X::AbstractMatrix{T},
     y::AbstractMatrix{T};
     times::Union{AbstractVector{T}, Nothing}=nothing,
+    stoic_coeff::Union{AbstractVector{T}, Nothing}=nothing,
     experiments::Union{AbstractVector{T}, Nothing}=nothing,
     niterations::Int=10,
     weights::Union{AbstractMatrix{T},AbstractVector{T},Nothing}=nothing,
@@ -292,13 +293,14 @@ function EquationSearch(
             X,
             y[j, :];
             times,
+            stoic_coeff,
             experiments,
             weights=(weights === nothing ? weights : weights[j, :]),
             varMap=varMap,
         ) for j in 1:nout
     ]
 
-    return EquationSearch(  # FIXME
+    return EquationSearch(
         datasets;
         niterations=niterations,
         options=options,

@@ -24,6 +24,7 @@ import ..ProgramConstantsModule: BATCH_DIM, FEATURE_DIM
 """
 Base.@kwdef mutable struct Dataset{T<:Real}
     times::Union{AbstractVector{T}, Nothing} = nothing
+    stoic_coeff::Union{AbstractVector{T}, Nothing} = nothing
     experiments::Union{AbstractVector{T}, Nothing} = nothing
     X::AbstractMatrix{T} = [1 2]
     y::AbstractVector{T} = [3]
@@ -47,6 +48,7 @@ function Dataset(
     X::AbstractMatrix{T},
     y::AbstractVector{T};
     times::Union{AbstractVector{T}, Nothing}=nothing,
+    stoic_coeff::Union{AbstractVector{T}, Nothing}=nothing,
     experiments::Union{AbstractVector{T}, Nothing}=nothing,
     weights::Union{AbstractVector{T},Nothing}=nothing,
     varMap::Union{Array{String,1},Nothing}=nothing,
@@ -65,7 +67,7 @@ function Dataset(
     end
     baseline = one(T)
 
-    return Dataset{T}(; times, experiments, X, y, n, nfeatures, weighted, weights, avg_y, baseline, varMap)
+    return Dataset{T}(; times, stoic_coeff, experiments, X, y, n, nfeatures, weighted, weights, avg_y, baseline, varMap)
 end
 
 end

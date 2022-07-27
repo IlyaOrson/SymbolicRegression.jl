@@ -48,11 +48,13 @@ function eval_loss(tree::Node{T}, dataset::Dataset{T}, options::Options)::T wher
         return T(Inf)
     end
 
-    function integrate(initial_condition, tspan)
+    function integrate(initial_condition, tspan, stoic_coeff)
+        @infiltrate
         function f(u, p, t)
             matrix_state = reshape(collect(u), length(u), :)
             (prediction, completion) = eval_tree_array(tree, matrix_state, options)
-            return [prediction[begin]]
+            rate = prediction[begin]
+            return [stoic * rate for stoic in stoic_coeff]
         end
         prob = ODEProblem(f, initial_condition, tspan)
         # local sol
@@ -65,43 +67,31 @@ function eval_loss(tree::Node{T}, dataset::Dataset{T}, options::Options)::T wher
         return sol.u[end], sol.retcode
     end
 
-    # times = dataset.times
-    # concentrations = dataset.states
-
-    # timepoints = 21
-    # times = range(0f0, 5f0, timepoints)  # FIXME
-    # X = Matrix(reshape(times, 1, timepoints))
-    # y = exp.(X ./ 2) .+ 5
-    # X .= y
-
     loss_ = 0f0
 
-    # integrate between states
-    # for (i, (t, s)) in enumerate(zip(times, states))
-    #     i == 1 && continue
-    #     timespan = t - times[i-1]
-    #     initial_condition = states[i-1]
-    #     prediction = integrate(initial_condition, timespan)
-    #     loss_ += (prediction - s) .^ 2
-    # end
-
+    @infiltrate
     states = dataset.X
     times = dataset.times
+    stoic_coeff = dataset.stoic_coeff
     experiments = dataset.experiments
 
+    @assert length(stoic_coeff) == size(states, 1)
     @assert length(times) == length(experiments) == size(states, 2)
+
     per_experiment = groupby(x -> x[begin], zip(experiments, times, eachcol(states)))
     for experiment in per_experiment
         _, t0, initial_condition = experiment[begin]  # supposing it is sorted
+
         for (i, data) in enumerate(experiment)
             _, t, s = data  # experiment tag is no longer used
             if i == 1
                 # integrate from first state always
                 continue
             end
-            @infiltrate
+
             timespan = (t0, t)
-            prediction, retcode = integrate(collect(initial_condition), timespan)
+            @infiltrate
+            prediction, retcode = integrate(collect(initial_condition), timespan, stoic_coeff)
             if retcode != :Success
                 loss_ = Inf
                 break

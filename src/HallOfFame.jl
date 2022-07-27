@@ -96,10 +96,11 @@ function calculate_pareto_frontier(
     weights=nothing,
     varMap=nothing,
     times=nothing,
+    stoic_coeff=nothing,
     experiments=nothing,
 ) where {T<:Real}
     return calculate_pareto_frontier(
-        Dataset(X, y; weights, varMap, times, experiments), hallOfFame, options
+        Dataset(X, y; weights, varMap, times, stoic_coeff, experiments), hallOfFame, options
     )
 end
 
