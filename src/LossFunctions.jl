@@ -49,7 +49,6 @@ function eval_loss(tree::Node{T}, dataset::Dataset{T}, options::Options)::T wher
     end
 
     function integrate(initial_condition, tspan, stoic_coeff)
-        @infiltrate
         function f(u, p, t)
             matrix_state = reshape(collect(u), length(u), :)
             (prediction, completion) = eval_tree_array(tree, matrix_state, options)
@@ -59,7 +58,7 @@ function eval_loss(tree::Node{T}, dataset::Dataset{T}, options::Options)::T wher
         prob = ODEProblem(f, initial_condition, tspan)
         # local sol
         # try
-            sol = solve(prob, Rodas4P(); verbose=false, maxiters=10^3)  # 1.0e-7 default dtmin, 1e5 default maxiters
+            sol = solve(prob, Tsit5(); verbose=false, maxiters=10^3)  # 1.0e-7 default dtmin, 1e5 default maxiters
         # catch
         #     @infiltrate
         # end
@@ -69,7 +68,6 @@ function eval_loss(tree::Node{T}, dataset::Dataset{T}, options::Options)::T wher
 
     loss_ = 0f0
 
-    @infiltrate
     states = dataset.X
     times = dataset.times
     stoic_coeff = dataset.stoic_coeff
@@ -90,7 +88,6 @@ function eval_loss(tree::Node{T}, dataset::Dataset{T}, options::Options)::T wher
             end
 
             timespan = (t0, t)
-            @infiltrate
             prediction, retcode = integrate(collect(initial_condition), timespan, stoic_coeff)
             if retcode != :Success
                 loss_ = Inf

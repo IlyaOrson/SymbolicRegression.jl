@@ -1,4 +1,5 @@
 using IterTools: ncycle
+using OrdinaryDiffEq
 
 num_datasets = 6
 num_timepoints = 10
@@ -29,10 +30,22 @@ end
 datasets = []
 for ini in initial_conditions
     prob = ODEProblem(f, ini, tspan)
-    sol = solve(prob, Rodas4(); saveat=times_per_dataset)
-    push!(datasets, Arrat(sol))
+    sol = solve(prob, AutoTsit5(Rosenbrock23()); saveat=times_per_dataset)
+    push!(datasets, Array(sol))
 end
 
 X = hcat(datasets...)
 times = ncycle(times_per_dataset, num_datasets) |> collect
 experiments = vcat([fill(Float32(i), num_timepoints) for i in 1:num_datasets]...)
+
+y = X[1,:]
+
+# bug in stiff integrators
+# (x1 * (-2.1474936 * (x2 + x1)))
+# infil> initial_condition
+# 2-element Vector{Float32}:
+#  3.6
+#  0.4
+
+# infil> tspan
+# (0.0f0, 2.2222223f0)
