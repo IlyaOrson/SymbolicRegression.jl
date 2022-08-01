@@ -1,6 +1,8 @@
 using IterTools: ncycle
 using OrdinaryDiffEq
 
+using SymbolicRegression
+
 num_datasets = 6
 num_timepoints = 10
 num_states = 2
@@ -26,26 +28,42 @@ function f(u,p,t)
     return [stoic * r for stoic in scoeff]
 end
 
-# datasets = Array{Float32}(undef, num_states, num_datasets * num_timepoints)
-datasets = []
-for ini in initial_conditions
-    prob = ODEProblem(f, ini, tspan)
-    sol = solve(prob, AutoTsit5(Rosenbrock23()); saveat=times_per_dataset)
-    push!(datasets, Array(sol))
+function generate_datasets(; noise_per_concentration=nothing)
+    datasets = []
+    for ini in initial_conditions
+        prob = ODEProblem(f, ini, tspan)
+        sol = solve(prob, AutoTsit5(Rosenbrock23()); saveat=times_per_dataset)
+        arr = Array(sol)
+        if isnothing(noise_per_concentration)
+            push!(datasets, Array(sol))
+        else
+            noise_matrix = vcat([noise_level * randn(Float32, (1,length(times_per_dataset))) for noise_level in noise_per_concentration]...)
+            push!(datasets, Array(sol) .+ noise_matrix)
+        end
+    end
+    return datasets
 end
 
+datasets = generate_datasets(; noise_per_concentration=[0.13552795534109782f0, 0.2144720446589021f0])
 X = hcat(datasets...)
 times = ncycle(times_per_dataset, num_datasets) |> collect
 experiments = vcat([fill(Float32(i), num_timepoints) for i in 1:num_datasets]...)
 
 y = X[1,:]
 
-# bug in stiff integrators
-# (x1 * (-2.1474936 * (x2 + x1)))
-# infil> initial_condition
-# 2-element Vector{Float32}:
-#  3.6
-#  0.4
+options = SymbolicRegression.Options(binary_operators=(+, *, /, -))
+hall_of_fame = EquationSearch(X, y, niterations=40, options=options, numprocs=4, times=times, experiments=experiments, stoic_coeff=scoeff)
 
-# infil> tspan
-# (0.0f0, 2.2222223f0)
+# test against symbolic solution
+proposed_rate(x1,x2) = ((x1 - ((x2 - x1) / 1.3333641f0)) / ((((x2 - -0.15033427f0) * 1.500032f0) - x2) + (x1 + 1.2743267f0)))
+function f_(u,p,t)
+    Ca, Cb = u
+    r = proposed_rate(Ca, Cb)
+    return [stoic * r for stoic in scoeff]
+end
+datasets_ = []
+for ini in initial_conditions
+    prob = ODEProblem(f_, ini, tspan)
+    sol = solve(prob, AutoTsit5(Rosenbrock23()); saveat=times_per_dataset)
+    push!(datasets_, Array(sol))
+end
