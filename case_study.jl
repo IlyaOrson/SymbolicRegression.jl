@@ -39,6 +39,7 @@ function generate_datasets(; noise_per_concentration=nothing)
         else
             noise_matrix = vcat([noise_level * randn(Float32, (1,length(times_per_dataset))) for noise_level in noise_per_concentration]...)
             push!(datasets, Array(sol) .+ noise_matrix)
+            # push!(datasets, Array(sol))
         end
     end
     return datasets
@@ -53,6 +54,18 @@ y = X[1,:]
 
 options = SymbolicRegression.Options(binary_operators=(+, *, /, -))
 hall_of_fame = EquationSearch(X, y, niterations=40, options=options, numprocs=4, times=times, experiments=experiments, stoic_coeff=scoeff)
+
+dominating = calculate_pareto_frontier(X, y, hall_of_fame, options)
+
+println("Complexity\tMSE\tEquation")
+
+for member in dominating
+    complexity = compute_complexity(member.tree, options)
+    loss = member.loss
+    string = string_tree(member.tree, options)
+
+    println("$(complexity)\t$(loss)\t$(string)")
+end
 
 # test against symbolic solution
 proposed_rate(x1,x2) = ((x1 - ((x2 - x1) / 1.3333641f0)) / ((((x2 - -0.15033427f0) * 1.500032f0) - x2) + (x1 + 1.2743267f0)))
