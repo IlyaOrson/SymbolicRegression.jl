@@ -25,7 +25,7 @@ end
 function f(u,p,t)
     Ca, Cb = u
     r = rate(Ca, Cb)
-    return [stoic * r for stoic in scoeff]
+    return [(1 / stoic) * r for stoic in scoeff]
 end
 
 function generate_datasets(; noise_per_concentration=nothing)
