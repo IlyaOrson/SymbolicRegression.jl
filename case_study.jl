@@ -1,6 +1,9 @@
+import Pkg
+Pkg.activate("/rds/general/user/os220/home/SymbolicRegression.jl")
+Pkg.instantiate()
+
 using IterTools: ncycle
 using OrdinaryDiffEq
-
 using SymbolicRegression
 
 num_datasets = 6
@@ -8,10 +11,10 @@ num_timepoints = 10
 num_states = 2
 
 tspan = (0f0,10f0)
-times_per_dataset=Float32.(collect(range(tspan[begin], tspan[end], num_timepoints)))
+times_per_dataset=Float32.(collect(range(tspan[begin], tspan[end]; length=num_timepoints)))
 
-ini_Ca = range(2f0,10f0, num_datasets)
-ini_Cb = range(0f0,2f0, num_datasets)
+ini_Ca = range(2f0,10f0; length = num_datasets)
+ini_Cb = range(0f0,2f0; length = num_datasets)
 initial_conditions = [[x0[begin],x0[end]] for x0 in zip(ini_Ca, ini_Cb)]
 
 scoeff = [-1f0, 1f0]
@@ -53,7 +56,7 @@ experiments = vcat([fill(Float32(i), num_timepoints) for i in 1:num_datasets]...
 y = X[1,:]
 
 options = SymbolicRegression.Options(binary_operators=(+, *, /, -))
-hall_of_fame = EquationSearch(X, y, niterations=40, options=options, numprocs=4, times=times, experiments=experiments, stoic_coeff=scoeff)
+hall_of_fame = EquationSearch(X, y, niterations=10, options=options, numprocs=4, times=times, experiments=experiments, stoic_coeff=scoeff)
 
 dominating = calculate_pareto_frontier(X, y, hall_of_fame, options)
 
@@ -67,6 +70,7 @@ for member in dominating
     println("$(complexity)\t$(loss)\t$(string)")
 end
 
+#=
 # test against symbolic solution
 proposed_rate(x1,x2) = ((x1 - ((x2 - x1) / 1.3333641f0)) / ((((x2 - -0.15033427f0) * 1.500032f0) - x2) + (x1 + 1.2743267f0)))
 function f_(u,p,t)
@@ -80,3 +84,4 @@ for ini in initial_conditions
     sol = solve(prob, AutoTsit5(Rosenbrock23()); saveat=times_per_dataset)
     push!(datasets_, Array(sol))
 end
+=#

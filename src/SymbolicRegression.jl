@@ -486,6 +486,8 @@ function _EquationSearch(
 
         if we_created_procs
             project_path = splitdir(Pkg.project().path)[1]
+            @show Pkg.project()
+            @show project_path
             activate_env_on_workers(procs, project_path, options)
             import_module_on_workers(procs, @__FILE__, options)
         end
