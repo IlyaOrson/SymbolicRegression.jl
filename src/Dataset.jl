@@ -65,9 +65,9 @@ function Dataset(
     else
         sum(y) / n
     end
-    baseline = one(T)
+    baseline_loss = one(T)
 
-    return Dataset{T}(; times, stoic_coeff, experiments, X, y, n, nfeatures, weighted, weights, avg_y, baseline, varMap)
+    return Dataset{T}(; times, stoic_coeff, experiments, X, y, n, nfeatures, weighted, weights, avg_y, baseline_loss, varMap)
 end
 
 end

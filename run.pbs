@@ -1,7 +1,7 @@
 #!/bin/bash
-#PBS -lwalltime=4:00:0
-#PBS -lselect=1:ncpus=32:mem=64g
+#PBS -lwalltime=18:00:0
+#PBS -lselect=1:ncpus=8:mem=64g
 
 module load julia/1.6.4
 
-julia /rds/general/user/os220/home/SymbolicRegression.jl/case_study.jl
+julia /rds/general/user/os220/home/SymbolicRegression.jl/case_study_3vars.jl
