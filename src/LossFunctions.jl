@@ -73,8 +73,9 @@ function eval_loss(tree::Node{T}, dataset::Dataset{T}, options::Options)::T wher
     stoic_coeff = dataset.stoic_coeff
     experiments = dataset.experiments
 
-    @assert length(stoic_coeff) == size(states, 1)
-    @assert length(times) == length(experiments) == size(states, 2)
+    # FIXME the y property of dataset does not bring everything we need
+    @infiltrate
+    exit()
 
     per_experiment = groupby(x -> x[begin], zip(experiments, times, eachcol(states)))
     for experiment in per_experiment

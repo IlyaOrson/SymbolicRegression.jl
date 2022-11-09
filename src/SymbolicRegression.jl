@@ -284,7 +284,7 @@ function EquationSearch(
     saved_state::Union{StateType{T},Nothing}=nothing,
     addprocs_function::Union{Function,Nothing}=nothing,
 ) where {T<:Real}
-    nout = size(y, FEATURE_DIM)
+    nout = size(y, FEATURE_DIM)  # FIXME
     if weights !== nothing
         weights = reshape(weights, size(y))
     end
