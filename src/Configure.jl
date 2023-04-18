@@ -51,13 +51,13 @@ end
 # Check for errors before they happen
 function test_dataset_configuration(dataset::Dataset{T}, options::Options) where {T<:Real}
     n = dataset.n
-    if n != size(dataset.X, 2) || n != size(dataset.y, 1)
-        throw(
-            AssertionError(
-                "Dataset dimensions are invalid. Make sure X is of shape [features, rows], y is of shape [rows] and if there are weights, they are of shape [rows].",
-            ),
-        )
-    end
+    # if n != size(dataset.X, 2) || n != size(dataset.y, 1)
+    #     throw(
+    #         AssertionError(
+    #             "Dataset dimensions are invalid. Make sure X is of shape [features, rows], y is of shape [rows] and if there are weights, they are of shape [rows].",
+    #         ),
+    #     )
+    # end
 
     if size(dataset.X, 2) > 10000
         if !options.batching

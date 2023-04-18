@@ -1,7 +1,10 @@
 import Pkg
-project_dir = "/rds/general/user/md1621/home/SymbolicRegression.jl"
+project_dir = "/rds/general/user/os220/home/SymbolicRegression.jl"
 Pkg.activate(project_dir)
 Pkg.instantiate()
+
+using Revise
+using Infiltrator
 
 using IterTools: ncycle
 using OrdinaryDiffEq
@@ -20,7 +23,6 @@ times_per_dataset=collect(range(tspan[begin], tspan[end]; length=num_timepoints)
 ini_NO = [5e0, 1e1, 5e0, 5e0, 0e0, 1e1]
 ini_N = [0e0, 0e0, 2e0, 0e0, 2e0, 2e0]
 ini_O = [0e0, 0e0, 0e0, 3e0, 3e0, 3e0]
-
 
 initial_conditions = [[x0...] for x0 in zip(ini_NO, ini_N, ini_O)]
 
@@ -96,10 +98,20 @@ X = hcat(datasets...)
 times = ncycle(times_per_dataset, num_datasets) |> collect
 experiments = vcat([fill(Float64(i), num_timepoints) for i in 1:num_datasets]...)
 
-y = X[1,:]
+# NOTE
+# so X is the matrix that defines the inputs for the rate
+# (a subset of the original states)
+# and y holds all the states
+# states = X
+# y = states
+# X = states[1,:]
+
+# y = X[1,:]
+
+y = [1]
 
 options = SymbolicRegression.Options(binary_operators=(+, *, /, -),hofFile="hall_of_fame_DNO.csv",maxsize=25,parsimony=1e-5)
-hall_of_fame = EquationSearch(X, y, niterations=50, options=options, numprocs=8, times=times, experiments=experiments, stoic_coeff=scoeff)
+hall_of_fame = EquationSearch(X, y, niterations=2, options=options, numprocs=0, multithreading=false, times=times, experiments=experiments, stoic_coeff=scoeff)
 
 dominating = calculate_pareto_frontier(X, y, hall_of_fame, options)
 

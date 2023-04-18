@@ -43,13 +43,19 @@ end
 
 # Evaluate the loss of a particular expression on the input dataset.
 function eval_loss(tree::Node{T}, dataset::Dataset{T}, options::Options)::T where {T<:Real}
-    (prediction, completion) = eval_tree_array(tree, dataset.X, options)
+
+    # @infiltrate
+
+    # (prediction, completion) = eval_tree_array(tree, dataset.X, options)
+    (prediction, completion) = eval_tree_array(tree, dataset.X[Int.(dataset.y),:], options)
     if !completion
         return T(Inf)
     end
 
     function integrate(initial_condition, tspan, stoic_coeff)
         function f(u, p, t)
+            # @infiltrate
+            u = collect(u)[Int.(dataset.y)]
             matrix_state = reshape(collect(u), length(u), :)
             (prediction, completion) = eval_tree_array(tree, matrix_state, options)
             rate = prediction[begin]
@@ -98,6 +104,7 @@ function eval_loss(tree::Node{T}, dataset::Dataset{T}, options::Options)::T wher
     end
     # @info tree, loss_, compute_complexity(tree, options)
 
+    @show loss_
     return loss_
     # if dataset.weighted
     #     return loss(prediction, dataset.y, dataset.weights, options)

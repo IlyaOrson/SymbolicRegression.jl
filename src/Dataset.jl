@@ -55,10 +55,12 @@ function Dataset(
 ) where {T<:Real}
     Base.require_one_based_indexing(X, y)
     n = size(X, BATCH_DIM)
-    nfeatures = size(X, FEATURE_DIM)
+    # nfeatures = size(X, FEATURE_DIM)
+    nfeatures = length(y)
     weighted = weights !== nothing
     if varMap === nothing
-        varMap = ["x$(i)" for i in 1:nfeatures]
+        # varMap = ["x$(i)" for i in 1:nfeatures]
+        varMap = ["x$(i)" for i in Int.(y)]
     end
     avg_y = if weighted
         sum(y .* weights) / sum(weights)
