@@ -10,6 +10,8 @@ import ..CoreModule: Options, Dataset, DATA_TYPE, LOSS_TYPE
 import ..ComplexityModule: compute_complexity
 import ..DimensionalAnalysisModule: violates_dimensional_constraints
 
+using Infiltrator
+
 function _loss(
     x::AbstractArray{T}, y::AbstractArray{T}, loss::LT
 ) where {T<:DATA_TYPE,LT<:Union{Function,SupervisedLoss}}
@@ -45,6 +47,7 @@ end
 function _eval_loss(
     tree::Node{T}, dataset::Dataset{T,L}, options::Options, regularization::Bool, idx
 )::L where {T<:DATA_TYPE,L<:LOSS_TYPE}
+
     (prediction, completion) = eval_tree_array(
         tree, maybe_getindex(dataset.X, :, idx), options
     )
@@ -67,7 +70,34 @@ function _eval_loss(
         loss_val += dimensional_regularization(tree, dataset, options)
     end
 
-    return loss_val
+    # NOTE: design
+    # options.constraints.initial.active = true
+    # options.constraints.initial.penalty = 1e1
+
+    # options.constraints.equilibrium.active = true
+    # options.constraints.equilibrium.penalty = 1e2
+
+    # println(prediction)
+    # @infiltrate
+    # options.constraint_initial_condition = false
+    # tol = 1e-1
+    diff = 0
+    # println(options.constraint_initial_condition)
+    if options.constraint_initial_condition
+        diff = abs(dataset.y[1] - prediction[1])
+        # if diff < tol
+        #     penalty = 1e1 * (1 + diff)
+        #     return L(penalty)
+        # else
+        #     return L(Inf)
+        # end
+    end
+    # @infiltrate
+    # print("_")
+
+    # TODO
+    # add flag and penalty to options
+    return loss_val * L(1 + 1e1 * diff)
 end
 
 # This evaluates function F:
