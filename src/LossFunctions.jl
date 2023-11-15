@@ -51,6 +51,7 @@ function _eval_loss(
     (prediction, completion) = eval_tree_array(
         tree, maybe_getindex(dataset.X, :, idx), options
     )
+
     if !completion
         return L(Inf)
     end
@@ -70,6 +71,9 @@ function _eval_loss(
         loss_val += dimensional_regularization(tree, dataset, options)
     end
 
+    # NOTE this will track all our custom penalizations
+    penalties = 0.0
+
     # NOTE: design
     # options.constraints.initial.active = true
     # options.constraints.initial.penalty = 1e1
@@ -81,23 +85,42 @@ function _eval_loss(
     # @infiltrate
     # options.constraint_initial_condition = false
     # tol = 1e-1
-    diff = 0
+    diff_initial = 0.0
     # println(options.constraint_initial_condition)
     if options.constraint_initial_condition
-        diff = abs(dataset.y[1] - prediction[1])
+        diff_initial = abs(dataset.y[1] - prediction[1])
         # if diff < tol
         #     penalty = 1e1 * (1 + diff)
         #     return L(penalty)
         # else
         #     return L(Inf)
         # end
+        penalties += loss_val * L(1e1 * diff_initial)
     end
-    # @infiltrate
-    # print("_")
+
+    if options.contraint_concentration_equilibrium
+        last_time = dataset.X[end]
+        future_first = 5 * last_time
+        future_second =  6 * last_time
+        time_lapse = future_second - future_first
+        futures = hcat(future_first, future_second)
+        (future_prediction, future_completion) = eval_tree_array(
+            tree, futures, options
+        )
+        diff_equilibrium = abs2(future_prediction[2] - future_prediction[1])
+        if diff_equilibrium > 1e-2 * time_lapse
+            penalty_equilibrum = 1e1 * diff_equilibrium
+            @infiltrate
+            penalties += penalty_equilibrum
+        end
+    end
+
+    # TODO monotonically increasing/decreasing constraint
+    # evaluate this on the directly available prediction array
 
     # TODO
     # add flag and penalty to options
-    return loss_val * L(1 + 1e1 * diff)
+    return loss_val + L(penalties)
 end
 
 # This evaluates function F:

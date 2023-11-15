@@ -427,6 +427,8 @@ function Options end
     npopulations::Union{Nothing,Integer}=nothing,
     npop::Union{Nothing,Integer}=nothing,
     constraint_initial_condition::Bool=false,
+    contraint_concentration_equilibrium::Bool=false,
+    # NOTE add constraint here
     kws...,
 ) where {use_recorder}
     for k in keys(kws)
@@ -798,9 +800,10 @@ function Options end
         deterministic,
         define_helper_functions,
         constraint_initial_condition,
+        contraint_concentration_equilibrium,
         # NOTE add new constraint here
     )
-    @info "Active constraints" constraint_initial_condition
+    @info "Active constraints" constraint_initial_condition contraint_concentration_equilibrium
     return options
 end
 

@@ -190,6 +190,7 @@ struct Options{CT,OP<:AbstractOperatorEnum,use_recorder,OPT<:Optim.Options,W}
     deterministic::Bool
     define_helper_functions::Bool
     constraint_initial_condition::Bool
+    contraint_concentration_equilibrium::Bool
     # NOTE add new constraint here
 end
 

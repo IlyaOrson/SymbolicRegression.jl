@@ -1,4 +1,4 @@
-import Pkg
+# import Pkg
 # project_dir = "/Users/md1621/Desktop/PhD-Code/Physics-Informed_ADoK/physics_informed_SR"
 # exp_dir = "/Users/md1621/Desktop/PhD-Code/Physics-Informed_ADoK/physics_informed_SR/exp_data"
 # rate_dir = "/Users/md1621/Desktop/PhD-Code/Physics-Informed_ADoK/physics_informed_SR/const_data"
@@ -26,7 +26,30 @@ ini_H = [8e0, 8e0, 3e0, 3e0, 8e0]
 ini_B = [2e0, 0e0, 0e0, 0e0, 2e0]
 ini_M = [3e0, 5e-1, 5e-1, 3e0, 5e-1]
 
-# READ THE DATASET FROM PYTHON
+# NOTE only used for development
+# start dev
+# i = 1
+# j = 1
+# datasets = readdlm(exp_dir*"/exp_$i.csv", ',', Float64, '\n')
+# X = reshape(times_per_dataset, 1, :)
+# y = reshape(datasets[j, :], 1, :)
+# name = "hof_files/hall_of_fame_T$i.csv"
+
+
+# options = Options(; # NOTE add new constraint here
+# binary_operators=[+, *, /, -],
+# unary_operators=[exp],
+# constraint_initial_condition=true,
+# contraint_concentration_equilibrium=true,
+# hofFile=name
+# )
+
+# hall_of_fame = equation_search(
+# X, y, niterations=2, options=options, parallelism=:serial
+# )
+# end dev
+
+# # READ THE DATASET FROM PYTHON
 for i in 1:num_datasets
     datasets = readdlm(exp_dir*"/exp_$i.csv", ',', Float64, '\n')
     #------------------------------#
@@ -46,11 +69,14 @@ for i in 1:num_datasets
         end
 
         options = Options(; # NOTE add new constraint here
-            binary_operators=[+, *, /, -], unary_operators=[exp], constraint_initial_condition=true, hofFile=name
+            binary_operators=[+, *, /, -],
+            unary_operators=[exp],
+            constraint_initial_condition=true,
+            hofFile=name
         )
 
         hall_of_fame = equation_search(
-            X, y, niterations=2, options=options
+            X, y, niterations=2, options=options, parallelism=:serial
         )
     end
 end
