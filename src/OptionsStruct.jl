@@ -190,6 +190,7 @@ struct Options{CT,OP<:AbstractOperatorEnum,use_recorder,OPT<:Optim.Options,W}
     deterministic::Bool
     define_helper_functions::Bool
     constraint_initial_condition::Bool
+    # NOTE add new constraint here
 end
 
 function Base.print(io::IO, options::Options)

@@ -798,8 +798,9 @@ function Options end
         deterministic,
         define_helper_functions,
         constraint_initial_condition,
+        # NOTE add new constraint here
     )
-
+    @info "Active constraints" constraint_initial_condition
     return options
 end
 
