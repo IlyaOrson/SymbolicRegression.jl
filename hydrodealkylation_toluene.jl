@@ -40,7 +40,7 @@ ini_M = [3e0, 5e-1, 5e-1, 3e0, 5e-1]
 # binary_operators=[+, *, /, -],
 # unary_operators=[exp],
 # constraint_initial_condition=true,
-# contraint_concentration_equilibrium=true,
+# constraint_concentration_equilibrium=true,
 # hofFile=name
 # )
 

@@ -427,7 +427,11 @@ function Options end
     npopulations::Union{Nothing,Integer}=nothing,
     npop::Union{Nothing,Integer}=nothing,
     constraint_initial_condition::Bool=false,
-    contraint_concentration_equilibrium::Bool=false,
+    constraint_concentration_equilibrium::Bool=false,
+    constraint_always_positive::Bool=false,
+    constraint_always_negative::Bool=false,
+    constraint_always_increasing::Bool=false,
+    constraint_always_decreasing::Bool=false,
     # NOTE add constraint here
     kws...,
 ) where {use_recorder}
@@ -800,10 +804,21 @@ function Options end
         deterministic,
         define_helper_functions,
         constraint_initial_condition,
-        contraint_concentration_equilibrium,
+        constraint_concentration_equilibrium,
+        constraint_always_positive,
+        constraint_always_negative,
+        constraint_always_increasing,
+        constraint_always_decreasing,
         # NOTE add new constraint here
     )
-    @info "Active constraints" constraint_initial_condition contraint_concentration_equilibrium
+    @info "Active constraints" begin
+        constraint_initial_condition
+        constraint_concentration_equilibrium
+        constraint_always_positive
+        constraint_always_negative
+        constraint_always_increasing
+        constraint_always_decreasing
+    end
     return options
 end
 

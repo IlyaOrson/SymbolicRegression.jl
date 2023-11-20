@@ -10,7 +10,8 @@ import ..CoreModule: Options, Dataset, DATA_TYPE, LOSS_TYPE
 import ..ComplexityModule: compute_complexity
 import ..DimensionalAnalysisModule: violates_dimensional_constraints
 
-using Infiltrator
+using Statistics: mean
+using Infiltrator: @infiltrate
 
 function _loss(
     x::AbstractArray{T}, y::AbstractArray{T}, loss::LT
@@ -98,7 +99,7 @@ function _eval_loss(
         penalties += loss_val * L(1e1 * diff_initial)
     end
 
-    if options.contraint_concentration_equilibrium
+    if options.constraint_concentration_equilibrium
         last_time = dataset.X[end]
         future_first = 5 * last_time
         future_second =  6 * last_time
@@ -110,9 +111,50 @@ function _eval_loss(
         diff_equilibrium = abs2(future_prediction[2] - future_prediction[1])
         if diff_equilibrium > 1e-2 * time_lapse
             penalty_equilibrum = 1e1 * diff_equilibrium
-            @infiltrate
+            # @infiltrate
             penalties += penalty_equilibrum
         end
+    end
+
+    how_negative(x) = max(0, -x)
+    how_positive(x) = max(0, x)
+
+    if options.constraint_always_positive
+        mean_diversion = mean(map(how_negative, prediction))
+        max_value = maximum(abs.(dataset.y))
+        penalty_always_positive = 1e1 * mean_diversion / max_value
+        penalties += penalty_always_positive
+    end
+    if options.constraint_always_negative
+        mean_diversion = mean(map(how_positive, prediction))
+        max_value = maximum(abs.(dataset.y))
+        penalty_always_negative = 1e1 * mean_diversion / max_value
+        penalties += penalty_always_negative
+    end
+    if options.constraint_always_increasing
+        # @infiltrate
+        penalty_increasing = 0.0
+        # for predicted in prediction[:, 2:end]:
+        for i in 2:length(prediction)
+            predicted_prev = prediction[i-1]
+            predicted_after = prediction[i]
+            change = predicted_after - predicted_prev
+            negative_change = how_negative(change)
+            penalty_increasing += 1e1 * negative_change
+        end
+        penalties += penalty_increasing
+    end
+    if options.constraint_always_decreasing
+        penalty_decreasing = 0.0
+        # for predicted in prediction[:, 2:end]:
+        for i in 2:length(prediction)
+            predicted_prev = prediction[i-1]
+            predicted_after = prediction[i]
+            change = predicted_after - predicted_prev
+            positive_change = how_positive(change)
+            penalty_decreasing += 1e1 * positive_change
+        end
+        penalties += penalty_decreasing
     end
 
     # TODO monotonically increasing/decreasing constraint
